@@ -1,2 +1,55 @@
-# future-earth-100m-simulator
-A high‑performance 3D Earth evolution simulator, simulating climate, sea‑level, ice‑sheet and tectonic changes from present day to 100 million years later with century‑level time steps. IPCC‑AR6 scenarios are adopted for near‑term projections; long‑term plate evolution is scenario‑based with confidence‑level labeling.
+# 未来地球一亿年模拟器 · Earth Future 100M Simulator
+
+以真实地球三维地形为基础、时间颗粒细化到百年级的地球演化模拟器：从 2024 年推演到 1 亿年后，联动**气候、海平面、冰盖、构造、生态（文明灯光）**五大圈层。
+
+纯前端单文件，可直接打开或部署到 GitHub Pages，无构建步骤。
+
+## 功能
+
+- 3D 地球：真实海岸线纹理（NASA Blue Marble 系）、地形法线凹凸、镜面海洋、云层、大气辉光、城市夜光
+- 时间轴 2024 → 1 亿年，步进 100 年，6 档流速（100 年/秒 ~ 100 万年/秒）
+- 3 套 IPCC AR6 排放情景（SSP1-2.6 / SSP2-4.5 / SSP5-8.5）
+- 实时指标：全球温升、海平面、格陵兰/南极冰盖存留、构造阶段、文明灯光（示意）
+- 图层开关：温度异常、海平面淹没（真实海岸线掩膜）、冰盖、构造流线、夜光、云层大气
+- 事件日志：13 个关键节点自动触发（1.5℃ 突破、净零窗口、冰盖不可逆消融、轨道冰期、黄石喷发窗口、地中海闭合、太阳增亮 1%…）
+- 置信度分级徽章随年份变化：高 / 中 / 低 / 情景
+- 拖拽旋转、滚轮缩放、快照导出 PNG
+
+## 运行
+
+```bash
+# 方式一：直接双击 index.html（需联网加载 three.js 与纹理，jsDelivr 加速）
+# 方式二：部署 GitHub Pages / 任意静态托管，效果相同
+```
+
+无需安装依赖、无需构建、无 API Key。
+
+## 数据与方法
+
+| 时段 | 内容 | 依据 | 置信度 |
+| --- | --- | --- | --- |
+| 至 2100 年 | 温升、海平面、冰盖响应 | IPCC AR6 情景（SSP1-2.6: 1.4℃/0.44m；SSP2-4.5: 2.7℃/0.60m；SSP5-8.5: 4.4℃/0.77m，为中值） | 高 |
+| 2100 – 1 万年 | 冰盖长期响应、海平面多世纪-千年尺度 | IPCC SROCC 千年尺度研究 | 中 |
+| 1 万 – 100 万年 | 轨道尺度冰期-间冰期循环、地貌侵蚀 | 米兰科维奇旋回、USGS 地貌量级 | 低 |
+| 100 万 – 1 亿年 | 板块运动、地中海闭合、超大陆早期、太阳增亮 | 板块运动速率（1–10cm/年）、NASA 太阳演化（约 +10%/10 亿年） | 情景（非预测） |
+
+> 声明：本工具为**科学传播与教育演示**。百万年尺度内容属于构造情景推演，海平面淹没为示意渲染，不构成任何预测结论。指标曲线为基于上述公开量级的内置参数化模型，非实时下载海量数据（保证单文件性能）。
+
+## 性能设计
+
+- 单 WebGL 画布，`pixelRatio` 上限 2，纹理 2048 级（jsDelivr CDN 加速）
+- 图层着色器轻量（2 层值噪声），构造流线 26 条低面数线段
+- 暂停时停止时间推进、粒子静止，无空转开销
+- DOM 每帧仅更新 6 个指标文本，其余模块静态
+
+## 文件
+
+```
+future-earth-simulator/
+├── index.html   # 单文件应用（全部逻辑内联）
+└── README.md
+```
+
+## 技术
+
+three.js r160（ESM importmap）、原生 WebGL 着色器、纯手写模拟引擎。无框架、无构建工具。

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>未来地球一亿年模拟器 · Earth Future 100M Simulator</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23060d18'/%3E%3Ccircle cx='12' cy='12' r='5' fill='%233bb7e8'/%3E%3Cpath d='M12 7a5 5 0 0 0-5 5h10a5 5 0 0 0-5-5z' fill='%232c8f5c'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#04070d; --panel:rgba(10,17,30,.78); --line:rgba(120,200,255,.22);
+  --ink:#e6f2ff; --muted:#8aa3ba; --accent:#3ec9f0; --gold:#e8b95c;
+  --cHi:#54e08a; --cMid:#e8c15c; --cLow:#f0934f; --cScn:#b28ff0;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden;height:100vh;position:fixed;inset:0}
+#globe{position:fixed;inset:0}
+.panel{position:fixed;background:linear-gradient(180deg,rgba(12,22,40,.86),rgba(6,12,22,.8));border:1px solid var(--line);backdrop-filter:blur(8px);border-radius:14px;padding:13px 15px;box-shadow:0 12px 44px rgba(0,0,0,.4);z-index:10}
+.topbar{top:12px;left:50%;transform:translateX(-50%);display:flex;gap:12px;align-items:center;max-width:96vw;flex-wrap:wrap}
+.ttl{font-size:17px;font-weight:800;letter-spacing:.1em}
+.ttl small{display:block;font-size:10px;color:var(--muted);letter-spacing:.16em;font-weight:400}
+.badge{font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge b{color:var(--ink)}
+.badge.hi{color:var(--cHi);border-color:rgba(84,224,138,.4)}
+.badge.mid{color:var(--cMid);border-color:rgba(232,193,92,.4)}
+.badge.low{color:var(--cLow);border-color:rgba(240,147,79,.4)}
+.badge.scn{color:var(--cScn);border-color:rgba(178,143,240,.4)}
+.left{top:70px;left:12px;width:264px}
+.right{top:70px;right:12px;width:292px;max-height:calc(100vh - 250px);display:flex;flex-direction:column}
+.bottom{bottom:12px;left:50%;transform:translateX(-50%);width:min(1120px,97vw)}
+h3{font-size:12px;letter-spacing:.1em;color:var(--accent);margin-bottom:8px;font-weight:700}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.metric{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.metric .k{font-size:10px;color:var(--muted)}
+.metric .v{font-size:16px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
+.metric .u{font-size:10px;color:var(--muted);font-weight:400}
+.meter{height:5px;border-radius:3px;background:#0a1526;margin-top:5px;overflow:hidden}
+.meter i{display:block;height:100%;border-radius:3px}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:10px 0}
+.layers{display:flex;gap:5px;flex-wrap:wrap}
+.chip{padding:6px 10px;border-radius:999px;border:1px solid var(--line);font-size:11px;cursor:pointer;background:rgba(255,255,255,.04);user-select:none;transition:.15s}
+.chip:hover{border-color:var(--accent)}
+.chip.on{background:linear-gradient(135deg,#1fb6e0,#3b82f6);border-color:transparent;color:#04121a;font-weight:700}
+.chip:active{transform:scale(.96)}
+.conf{margin-top:9px;font-size:11px;color:var(--muted);line-height:1.8;padding:8px 10px;border:1px dashed rgba(120,200,255,.25);border-radius:9px}
+.conf b.hi{color:var(--cHi)} .conf b.mid{color:var(--cMid)} .conf b.low{color:var(--cLow)} .conf b.scn{color:var(--cScn)}
+.log{flex:1;overflow:auto;font-size:11px;line-height:1.65;padding:8px;background:rgba(0,0,0,.3);border-radius:9px;border:1px solid var(--line);min-height:70px;max-height:30vh}
+.log div{border-left:2px solid var(--accent);padding:2px 8px;margin:4px 0;color:var(--muted)}
+.log .hi{border-left-color:var(--cHi)} .log .mid{border-left-color:var(--cMid)} .log .low{border-left-color:var(--cLow)} .log .scn{border-left-color:var(--cScn)}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.row label{font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:4px;flex:1}
+select,input[type=number]{background:rgba(255,255,255,.07);border:1px solid var(--line);color:var(--ink);padding:7px 9px;border-radius:8px;font-size:12px;min-height:38px;min-width:0;width:100%}
+input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;min-height:24px}
+.buttons{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+.btn{border:none;border-radius:9px;padding:9px 13px;font-size:12px;font-weight:700;cursor:pointer;color:#04121a;min-height:44px;min-width:60px;transition:.15s}
+.btn.primary{background:linear-gradient(135deg,#22d3ee,#3b82f6)}
+.btn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--ink)}
+.btn:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.btn:active{transform:scale(.96)}
+.scale{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:3px;padding:0 2px;font-variant-numeric:tabular-nums}
+.years{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--gold)}
+.years small{font-size:12px;color:var(--muted);font-weight:400;margin-left:6px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px;vertical-align:-1px}
+.credit{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(138,163,186,.7);text-align:center;max-width:97vw;z-index:9}
+.credit a{color:var(--accent);text-decoration:none}
+@media(max-width:960px){
+  .left{top:64px;left:8px;width:calc(50vw - 14px)}
+  .right{top:64px;right:8px;width:calc(50vw - 14px);max-height:42vh}
+  .bottom{width:97vw}
+  .years{font-size:20px}
+}
+</style>
+</head>
+<body>
+<div id="globe"></div>
+
+<div class="panel topbar">
+  <div class="ttl">未来地球一亿年模拟器<small>EARTH FUTURE · 100 MILLION YEARS · 3D</small></div>
+  <span class="badge" id="scnBadge">情景 SSP2-4.5</span>
+  <span class="badge mid" id="confBadge">置信度 中</span>
+</div>
+
+<div class="panel left">
+  <h3>全球状态指标</h3>
+  <div class="grid">
+    <div class="metric"><div class="k">全球温升（vs 1850-1900）</div><div class="v" id="mTemp">+0.00<span class="u">℃</span></div><div class="meter"><i id="bTemp" style="width:0%;background:linear-gradient(90deg,#f0934f,#e4576b)"></i></div></div>
+    <div class="metric"><div class="k">海平面（vs 1995-2014）</div><div class="v" id="mSea">+0.00<span class="u">m</span></div><div class="meter"><i id="bSea" style="width:0%;background:linear-gradient(90deg,#3ec9f0,#4c9af5)"></i></div></div>
+    <div class="metric"><div class="k">格陵兰冰盖存留</div><div class="v" id="mGrl">100<span class="u">%</span></div><div class="meter"><i id="bGrl" style="width:100%;background:#dfe9f5"></i></div></div>
+    <div class="metric"><div class="k">南极冰盖存留</div><div class="v" id="mAnt">100<span class="u">%</span></div><div class="meter"><i id="bAnt" style="width:100%;background:#dfe9f5"></i></div></div>
+    <div class="metric"><div class="k">构造阶段</div><div class="v" id="mTec">现代</div></div>
+    <div class="metric"><div class="k">人类文明灯光（示意）</div><div class="v" id="mCiv">100<span class="u">%</span></div><div class="meter"><i id="bCiv" style="width:100%;background:#f4d06f"></i></div></div>
+  </div>
+  <div class="divider"></div>
+  <h3>图层</h3>
+  <div class="layers">
+    <div class="chip on" data-l="temp">温度异常</div>
+    <div class="chip on" data-l="sea">海平面淹没</div>
+    <div class="chip on" data-l="ice">冰盖</div>
+    <div class="chip" data-l="tec">构造流线</div>
+    <div class="chip on" data-l="civ">夜光·文明</div>
+    <div class="chip on" data-l="atmo">云层大气</div>
+  </div>
+  <div class="divider"></div>
+  <div class="conf">
+    置信度分级：<b class="hi">高</b>＝IPCC AR6 本世纪情景 ·
+    <b class="mid">中</b>＝千年尺度冰盖/海平面（SROCC）·
+    <b class="low">低</b>＝万年尺度轨道-气候 ·
+    <b class="scn">情景</b>＝百万年构造推演（非预测）。海平面淹没为示意。
+  </div>
+</div>
+
+<div class="panel right">
+  <h3>事件日志</h3>
+  <div class="log" id="log"></div>
+  <div class="divider"></div>
+  <div class="row">
+    <label>排放情景<select id="scnSel"><option value="1">SSP1-2.6 · 低排放</option><option value="2" selected>SSP2-4.5 · 中等</option><option value="3">SSP5-8.5 · 高排放</option></select></label>
+    <label>时间流速<select id="spdSel"><option value="100">100 年/秒</option><option value="1000" selected>1000 年/秒</option><option value="10000">1 万年/秒</option><option value="100000">10 万年/秒</option><option value="1000000">100 万年/秒</option></select></label>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <input type="number" id="jumpIn" placeholder="跳转年份 2024~1亿" min="2024" max="100000000" step="100">
+    <button class="btn ghost" id="jumpBtn">跳转</button>
+  </div>
+  <div class="buttons">
+    <button class="btn primary" id="playBtn" style="flex:1">播放</button>
+    <button class="btn ghost" id="rstBtn">重置</button>
+    <button class="btn ghost" id="shotBtn">快照</button>
+  </div>
+</div>
+
+<div class="credit">数据基准：IPCC AR6 / SROCC、USGS 构造速率、NASA 太阳演化模型。纯前端 · 单文件 · 可离线运行 · 纹理经 jsDelivr 加速加载。</div>
+
+<div class="panel bottom">
+  <div class="row" style="justify-content:flex-start;gap:16px">
+    <div class="years" id="yRead">2024<small>年</small></div>
+    <div style="flex:1">
+      <input type="range" id="tl" min="2024" max="100000000" step="100" value="2024">
+      <div class="scale"><span>2024</span><span>2100</span><span>2300</span><span>3000</span><span>1万</span><span>10万</span><span>100万</span><span>1000万</span><span>1亿年</span></div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+/* ================= 基础场景 ================= */
+const container = document.getElementById('globe');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 1000);
+camera.position.set(0, 0.4, 3.1);
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio||1, 2));
+renderer.setSize(innerWidth, innerHeight);
+container.appendChild(renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = .08;
+controls.minDistance = 1.5; controls.maxDistance = 8; controls.rotateSpeed = .6;
+
+/* 星空 */
+(function(){
+  const g = new THREE.BufferGeometry(), N = 4000, p = new Float32Array(N*3);
+  for(let i=0;i<N;i++){
+    const r=60+Math.random()*140, t=Math.acos(2*Math.random()-1), q=2*Math.PI*Math.random();
+    p[i*3]=r*Math.sin(t)*Math.cos(q); p[i*3+1]=r*Math.sin(t)*Math.sin(q); p[i*3+2]=r*Math.cos(t);
+  }
+  g.setAttribute('position', new THREE.BufferAttribute(p,3));
+  scene.add(new THREE.Points(g, new THREE.PointsMaterial({color:0xffffff,size:.14,sizeAttenuation:true,transparent:true,opacity:.8})));
+})();
+
+/* 光照 */
+scene.add(new THREE.AmbientLight(0x4a5a6e, .6));
+const sun = new THREE.DirectionalLight(0xfff4e0, 1.6); sun.position.set(5,2,4); scene.add(sun);
+
+/* ================= 纹理（jsDelivr 加速 three.js 官方 NASA 地球纹理，失败自动降级程序化纹理） ================= */
+const TEX = {
+  atmos:'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/planets/earth_atmos_2048.jpg',
+  spec :'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/planets/earth_specular_2048.jpg',
+  normal:'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/planets/earth_normal_2048.jpg',
+  cloud:'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/planets/earth_clouds_1024.png',
+  lights:'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/planets/earth_lights_2048.png'
+};
+const loader = new THREE.TextureLoader();
+function fallbackTex(){
+  const c=document.createElement('canvas'); c.width=c.height=512;
+  const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,512); g.addColorStop(0,'#0a3d86'); g.addColorStop(.5,'#1453a8'); g.addColorStop(1,'#0a3d86');
+  x.fillStyle=g; x.fillRect(0,0,512,512);
+  x.fillStyle='#2f6b35';
+  [[.52,.48,.1,.14],[.2,.5,.09,.12],[.28,.72,.05,.08],[.52,.74,.06,.08],[.74,.72,.04,.06],[.5,.18,.1,.06]].forEach(c0=>{
+    x.beginPath(); x.ellipse(c0[0]*512,c0[1]*512,c0[2]*512,c0[3]*512,0,0,Math.PI*2); x.fill();
+  });
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t;
+}
+function loadTex(url, cb){
+  loader.load(url, t=>{ t.wrapS=t.wrapT=THREE.RepeatWrapping; cb(t); }, undefined, ()=>{ cb(fallbackTex()); });
+}
+
+/* ================= 地球 ================= */
+const earth = new THREE.Mesh(
+  new THREE.SphereGeometry(1, 160, 160),
+  new THREE.MeshPhongMaterial({ color:0xffffff, shininess:16, specular:0x223344 })
+);
+scene.add(earth);
+let landMaskTex = null;
+loadTex(TEX.atmos, t=>{ earth.material.map=t; earth.material.needsUpdate=true; buildLandMask(t.image); });
+loadTex(TEX.spec,  t=>{ earth.material.specularMap=t; earth.material.needsUpdate=true; });
+loadTex(TEX.normal, t=>{ earth.material.normalMap=t; earth.material.normalScale.set(1.25,1.25); earth.material.needsUpdate=true; });
+
+/* 陆地掩膜（从真实纹理提取海岸线，供海平面图层） */
+function buildLandMask(img){
+  try{
+    const c=document.createElement('canvas'); c.width=512; c.height=256;
+    const x=c.getContext('2d'); x.drawImage(img,0,0,512,256);
+    const d=x.getImageData(0,0,512,256);
+    for(let i=0;i<d.data.length;i+=4){
+      const r=d.data[i], g=d.data[i+1], b=d.data[i+2];
+      const sea = (b>r+12 && b>g+12) ? 1 : 0;
+      const v = sea?0:255;
+      d.data[i]=d.data[i+1]=d.data[i+2]=v;
+    }
+    x.putImageData(d,0,0);
+    const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping;
+    landMaskTex=t;
+  }catch(e){ landMaskTex=null; }
+}
+
+/* 云层 */
+const clouds = new THREE.Mesh(
+  new THREE.SphereGeometry(1.015, 96, 96),
+  new THREE.MeshPhongMaterial({ transparent:true, opacity:.38, depthWrite:false, color:0xffffff })
+);
+loadTex(TEX.cloud, t=>{ clouds.material.map=t; clouds.material.needsUpdate=true; });
+scene.add(clouds);
+
+/* 大气辉光 */
+scene.add(new THREE.Mesh(
+  new THREE.SphereGeometry(1.13, 64, 64),
+  new THREE.ShaderMaterial({
+    vertexShader:'varying vec3 vN;void main(){vN=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+    fragmentShader:'varying vec3 vN;void main(){float i=pow(.72-dot(vN,vec3(0,0,1)),2.2);gl_FragColor=vec4(.32,.62,1.,1.)*i;}',
+    blending:THREE.AdditiveBlending, side:THREE.BackSide, transparent:true, depthWrite:false
+  })
+));
+
+/* 夜光（文明灯光） */
+const lightsMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(1.002, 96, 96),
+  new THREE.MeshBasicMaterial({ transparent:true, opacity:1, blending:THREE.AdditiveBlending, depthWrite:false, color:0xf4d06f })
+);
+loadTex(TEX.lights, t=>{ lightsMesh.material.map=t; lightsMesh.material.needsUpdate=true; });
+scene.add(lightsMesh);
+
+/* ================= 动态图层着色器 ================= */
+const LAYER_VS = 'varying vec2 vUv;varying vec3 vN;void main(){vUv=uv;vN=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}';
+function layerMat(frag, uniforms){
+  return new THREE.ShaderMaterial({ vertexShader:LAYER_VS, fragmentShader:frag, uniforms,
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.FrontSide });
+}
+const NOISE_GLSL = 'float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}float n(vec2 p){vec2 i=floor(p),f=fract(p);float a=h(i),b=h(i+vec2(1,0)),c=h(i+vec2(0,1)),d=h(i+vec2(1,1));vec2 u=f*f*(3.-2.*f);return mix(mix(a,b,u.x),mix(c,d,u.x),u.y);}';
+
+/* 温度异常层 */
+const tempLayer = new THREE.Mesh(new THREE.SphereGeometry(1.02, 96, 96), layerMat(
+  NOISE_GLSL+'varying vec2 vUv;uniform float uI;uniform float uT;void main(){float la=asin(clamp(2.*vUv.y-1.,-1.,1.))/1.5708;float m=n(vUv*14.+uT*.008)*.65+n(vUv*30.-uT*.012)*.35;m=smoothstep(.3,.8,m)*(0.6+.5*smoothstep(.8,.98,abs(la)));gl_FragColor=vec4(mix(vec3(1.,.36,.2),vec3(1.,.72,.35),n(vUv*8.)),m*uI*.5);}',
+  { uI:{value:0}, uT:{value:0} }
+));
+/* 海平面淹没层（真实海岸线掩膜 + 低纬低洼示意） */
+const seaLayer = new THREE.Mesh(new THREE.SphereGeometry(1.024, 96, 96), layerMat(
+  NOISE_GLSL+'varying vec2 vUv;uniform float uI;uniform float uT;uniform sampler2D uM;void main(){float land=texture2D(uM,vUv).r;float la=asin(clamp(2.*vUv.y-1.,-1.,1.))/1.5708;float m=n(vUv*18.+uT*.006)*.6+n(vUv*44.-uT*.01)*.4;float low=(1.-smoothstep(.35,.95,m))*(1.-smoothstep(.55,1.,abs(la))*.7);float a=land*low*uI*.6;gl_FragColor=vec4(vec3(.28,.62,.96),a);}',
+  { uI:{value:0}, uT:{value:0}, uM:{value:null} }
+));
+/* 冰盖层（格陵兰 + 南极，真实位置近似） */
+const iceLayer = new THREE.Mesh(new THREE.SphereGeometry(1.022, 96, 96), layerMat(
+  NOISE_GLSL+'varying vec2 vUv;uniform float uI;uniform float uT;void main(){vec2 u=vUv;float dg=length(vec2((u.x-.875)*4.5,(u.y-.972)*9.));float mG=1.-smoothstep(.55,1.05,dg);float mA=1.-smoothstep(.02,.08,u.y);float mask=max(mG,mA);float m=n(u*40.+uT*.01)*.35+.65;float a=mask*m*uI*.6;gl_FragColor=vec4(vec3(.92,.97,1.),a);}',
+  { uI:{value:0}, uT:{value:0} }
+));
+scene.add(tempLayer, seaLayer, iceLayer);
+seaLayer.material.uniforms.uM.value = landMaskTex; /* 掩膜就绪后更新 */
+
+/* 构造流线 */
+const tecGroup = new THREE.Group(); scene.add(tecGroup);
+(function(){
+  const N=26;
+  for(let i=0;i<N;i++){
+    const R=1.035, la=(Math.random()-.5)*Math.PI*.85, lo=Math.random()*Math.PI*2, len=.35+Math.random()*.65, pts=[];
+    for(let t=0;t<=1;t+=.02){
+      const lt=la+Math.sin(t*Math.PI)*.16, ln=lo+t*len;
+      pts.push(new THREE.Vector3(R*Math.cos(lt)*Math.cos(ln), R*Math.sin(lt), R*Math.cos(lt)*Math.sin(ln)));
+    }
+    tecGroup.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(pts),
+      new THREE.LineBasicMaterial({color:0xb28ff0,transparent:true,opacity:.0,depthWrite:false})
+    ));
+  }
+})();
+tecGroup.visible = false;
+
+/* 图层可见性 */
+const LAYER_OBJ = { temp:tempLayer, sea:seaLayer, ice:iceLayer, tec:tecGroup, civ:lightsMesh, atmo:clouds };
+/* ================= 模拟引擎（数据：IPCC AR6 / SROCC / USGS / NASA 量级） ================= */
+const STATE = { year:2024, end:1e8, playing:false, speed:1000, scn:2 };
+/* IPCC AR6 SPM 2081-2100 中值：温升℃ / 海平面 m；冰盖存留为情景示意 */
+const SCEN = {
+  1:{ name:'SSP1-2.6 · 低排放', t2100:1.4, sea2100:0.44, grl2100:.86, ant2100:.95, seaLong:4,  tauGrl:8e3,  tauAnt:5e7 },
+  2:{ name:'SSP2-4.5 · 中等排放', t2100:2.7, sea2100:0.60, grl2100:.66, ant2100:.88, seaLong:11, tauGrl:3e3,  tauAnt:1e7 },
+  3:{ name:'SSP5-8.5 · 高排放', t2100:4.4, sea2100:0.77, grl2100:.45, ant2100:.80, seaLong:56, tauGrl:1.5e3, tauAnt:5e6 }
+};
+function simulate(year){
+  const y = Math.max(0, year-2024), s = SCEN[STATE.scn];
+  let temp;
+  if(y<=76) temp = s.t2100*y/76;
+  else temp = s.t2100 + s.t2100*.35*(1-Math.exp(-(y-76)/3000));
+  let sea;
+  if(y<=76) sea = s.sea2100*y/76;
+  else sea = s.sea2100 + (s.seaLong-s.sea2100)*(1-Math.exp(-(y-76)/Math.max(1e5,s.seaLong*3e4))) + 1.0*(1-Math.exp(-(y-76)/300));
+  const grl = y<=76 ? (1-(1-s.grl2100)*y/76)*100 : s.grl2100*Math.exp(-(y-76)/s.tauGrl)*100;
+  const ant = y<=76 ? (1-(1-s.ant2100)*y/76)*100 : s.ant2100*Math.exp(-(y-76)/s.tauAnt)*100;
+  let civ = 100;
+  if(y>200) civ *= .85+.15*Math.exp(-(y-200)/200);
+  civ *= Math.exp(-Math.max(0,y-1e4)/3e7);
+  let tec;
+  if(y<1e4) tec = '现代板块格局';
+  else if(y<1e6) tec = '大西洋扩张 2-4cm/年';
+  else if(y<2e7) tec = '环太平洋俯冲调整';
+  else if(y<6e7) tec = '地中海闭合·新造山带';
+  else tec = '超大陆聚合早期';
+  return { temp, sea, grl, ant, civ, tec };
+}
+/* 事件表：时间 → [文案, 置信度类]（科学共识量级，低置信度明确标注） */
+const EVENTS = [
+  [2030,'全球温升或突破 1.5℃（IPCC 概率评估，情景相关）','mid'],
+  [2050,'净零排放关键转型窗口（巴黎协定目标期）','mid'],
+  [2100,'IPCC AR6 情景终点：温升与海平面按情景锁定','hi'],
+  [2300,'冰盖长期响应主导海平面（SROCC 千年尺度）','mid'],
+  [3000,'持续高温下格陵兰冰盖进入不可逆消融（示意）','mid'],
+  [5000,'岁差—轨道尺度：冰期—间冰期循环（约 2.6 万/4.1 万年）','low'],
+  [20000,'轨道参数使地球进入下一冰期窗口（人类影响叠加）','low'],
+  [50000,'尼亚加拉瀑布被完全侵蚀（USGS 量级）','low'],
+  [100000,'黄石超级火山新一轮大喷发窗口（周期 60–80 万年）','low'],
+  [1000000,'板块运动开始重塑海陆格局（构造推演）','scn'],
+  [10000000,'大西洋持续扩张，太平洋开始收缩（板块速率量级）','scn'],
+  [50000000,'地中海完全闭合，新造山带隆升（非洲板块北移）','scn'],
+  [100000000,'太阳增亮约 +1%（NASA 太阳演化）；超大陆聚合早期（情景）','scn']
+];
+const FIRED = new Set();
+
+/* ================= UI ================= */
+const $ = id => document.getElementById(id);
+const yRead=$('yRead'), tl=$('tl'), logEl=$('log'), confBadge=$('confBadge'), scnBadge=$('scnBadge');
+function fmtYear(y){
+  if(y<10000) return Math.round(y).toLocaleString();
+  if(y<1e6) return (y/1e3).toFixed(1)+' 万';
+  if(y<1e8) return (y/1e6).toFixed(1)+' 千万';
+  return (y/1e6).toFixed(0)+' 亿';
+}
+function addLog(msg, cls){
+  const d=document.createElement('div');
+  d.className=cls||'mid';
+  d.textContent='['+fmtYear(STATE.year)+'年] '+msg;
+  logEl.prepend(d);
+  while(logEl.children.length>30) logEl.removeChild(logEl.lastChild);
+}
+function confOf(y){
+  if(y<=2100) return '高';
+  if(y<=10000) return '中';
+  if(y<=1e6) return '低';
+  return '情景';
+}
+function updateUI(){
+  const s=simulate(STATE.year);
+  const yFmt=fmtYear(STATE.year);
+  yRead.innerHTML=yFmt+'<small>'+(STATE.year<1e5?'年':'')+'</small>';
+  tl.value=STATE.year;
+  $('mTemp').innerHTML=(s.temp>=0?'+':'')+s.temp.toFixed(2)+'<span class="u">℃</span>';
+  $('bTemp').style.width=Math.min(100,s.temp/6*100)+'%';
+  $('mSea').innerHTML='+'+(s.sea>=0?s.sea.toFixed(1):s.sea.toFixed(1))+'<span class="u">m</span>';
+  $('bSea').style.width=Math.min(100,s.sea/60*100)+'%';
+  $('mGrl').innerHTML=Math.max(0,s.grl).toFixed(0)+'<span class="u">%</span>';
+  $('bGrl').style.width=Math.max(0,Math.min(100,s.grl))+'%';
+  $('mAnt').innerHTML=Math.max(0,s.ant).toFixed(0)+'<span class="u">%</span>';
+  $('bAnt').style.width=Math.max(0,Math.min(100,s.ant))+'%';
+  $('mTec').textContent=s.tec;
+  $('mCiv').innerHTML=Math.max(0,Math.min(100,s.civ)).toFixed(0)+'<span class="u">%</span>';
+  $('bCiv').style.width=Math.max(0,Math.min(100,s.civ))+'%';
+  const c=confOf(STATE.year);
+  confBadge.textContent='置信度 '+c;
+  confBadge.className='badge '+(c==='高'?'hi':c==='中'?'mid':c==='低'?'low':'scn');
+  /* 图层强度 */
+  tempLayer.material.uniforms.uI.value=Math.min(1,s.temp/4.4);
+  seaLayer.material.uniforms.uI.value=Math.min(1,s.sea/12);
+  seaLayer.material.uniforms.uM.value=landMaskTex;
+  iceLayer.material.uniforms.uI.value=Math.min(1,(100-s.grl)/100*.6+(100-s.ant)/100*.4);
+  lightsMesh.material.opacity=s.civ/100;
+  const tecOn=STATE.year>1e4;
+  tecGroup.visible=STATE.layers.tec&&tecOn;
+  tecGroup.children.forEach(l=>{ l.material.opacity=tecOn?Math.min(.75,Math.log10(STATE.year/1e4)*.25):0; });
+}
+function markEvents(){
+  const ry=Math.round(STATE.year);
+  for(const [y,msg,cls] of EVENTS){
+    if(!FIRED.has(y) && ry>=y && y>STATE.year-STATE.speed*2){ FIRED.add(y); addLog(msg,cls); }
+  }
+}
+/* 图层开关 */
+STATE.layers={temp:true,sea:true,ice:true,tec:false,civ:true,atmo:true};
+document.querySelectorAll('.chip').forEach(ch=>{
+  ch.addEventListener('click',()=>{
+    const k=ch.dataset.l;
+    STATE.layers[k]=!STATE.layers[k];
+    ch.classList.toggle('on',STATE.layers[k]);
+    LAYER_OBJ[k].visible=STATE.layers[k];
+    if(k==='tec') updateUI();
+  });
+});
+$('playBtn').addEventListener('click',()=>{
+  STATE.playing=!STATE.playing;
+  $('playBtn').textContent=STATE.playing?'暂停':'播放';
+  if(STATE.year>=STATE.end){ STATE.year=2024; updateUI(); }
+});
+$('rstBtn').addEventListener('click',()=>{ STATE.playing=false; $('playBtn').textContent='播放'; STATE.year=2024; updateUI(); });
+$('shotBtn').addEventListener('click',()=>{
+  renderer.render(scene,camera);
+  const a=document.createElement('a');
+  a.download='earth-future-'+fmtYear(STATE.year)+'.png';
+  a.href=renderer.domElement.toDataURL('image/png');
+  a.click();
+  addLog('已导出快照 PNG','hi');
+});
+$('jumpBtn').addEventListener('click',()=>{
+  const v=Math.round(+$('jumpIn').value);
+  if(v>=2024&&v<=1e8){ STATE.year=v; updateUI(); addLog('跳转至 '+fmtYear(v)+' 年','hi'); }
+});
+$('scnSel').addEventListener('change',e=>{
+  STATE.scn=+e.target.value;
+  scnBadge.textContent='情景 '+SCEN[STATE.scn].name;
+  addLog('切换情景：'+SCEN[STATE.scn].name,'hi');
+  updateUI();
+});
+$('spdSel').addEventListener('change',e=>{ STATE.speed=+e.target.value; });
+tl.addEventListener('input',()=>{ STATE.year=+tl.value; updateUI(); });
+addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+
+/* ================= 主循环 ================= */
+let last=performance.now(), tAcc=0;
+function loop(now){
+  const dt=Math.min(2,(now-last)/1000); last=now;
+  if(STATE.playing){
+    STATE.year+=STATE.speed*dt;
+    if(STATE.year>=STATE.end){ STATE.year=STATE.end; STATE.playing=false; $('playBtn').textContent='播放'; }
+    updateUI(); markEvents();
+  }
+  tAcc+=dt;
+  earth.rotation.y+=.018*dt;
+  clouds.rotation.y+=.021*dt;
+  lightsMesh.rotation.y=earth.rotation.y;
+  const u=tAcc;
+  tempLayer.material.uniforms.uT.value=u;
+  seaLayer.material.uniforms.uT.value=u;
+  iceLayer.material.uniforms.uT.value=u;
+  controls.update();
+  renderer.render(scene,camera);
+  requestAnimationFrame(loop);
+}
+addLog('系统就绪：基准 2024 年，真实地球纹理 + IPCC 情景模型。','hi');
+addLog('提示：万年以上板块结果为构造推演，非精确预测；海平面淹没为示意。','scn');
+scnBadge.textContent='情景 '+SCEN[STATE.scn].name;
+updateUI();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
